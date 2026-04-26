@@ -1341,19 +1341,20 @@
     ];
 
     function buildCollectedGrid(apiItems) {
-      const apiMap = {};
-      (apiItems || []).forEach(i => { 
-        apiMap[i.type] = i.collected;
-        apiMap[i.type.toLowerCase()] = i.collected;
-      });
-
-      return ALL_DATA_TYPES.map(dt => {
-        const collected = apiMap[dt.type];
-        const cls = collected === true ? 'yes' : collected === false ? 'no' : 'no';
-        return `<div class="collected-item ${cls}"><div class="collected-dot"></div><span>${dt.icon} ${dt.type}</span></div>`;
-      }).join('');
-    }
-
+  const apiMap = {};
+  (apiItems || []).forEach(i => { 
+    if(i.type) apiMap[i.type.toLowerCase().trim()] = i.collected; 
+  });
+  return ALL_DATA_TYPES.map(dt => {
+    const dtKey = dt.type.toLowerCase().trim();
+    const match = Object.keys(apiMap).find(k => 
+      dtKey.includes(k) || k.includes(dtKey)
+    );
+    const collected = match !== undefined ? apiMap[match] : undefined;
+    const cls = collected === true ? 'yes' : 'no';
+    return `<div class="collected-item ${cls}"><div class="collected-dot"></div><span>${dt.icon} ${dt.type}</span></div>`;
+  }).join('');
+}
     function boolPill(v) { return v ? '<span class="pill yes">Yes</span>' : '<span class="pill no">No</span>'; }
 
     /* ── Category scores — human label ── */
