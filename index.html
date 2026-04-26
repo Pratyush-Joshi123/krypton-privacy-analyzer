@@ -1,0 +1,1740 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Krypton</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@300;400;500;600&display=swap"
+    rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #DDE8DE;
+      --sidebar: #cfdfd0;
+      --panel: #d3e3d4;
+      --card: #c8d9c9;
+      --border: #8aaa94;
+      --border-light: #c2d6c4;
+      --accent: #5C7A6E;
+      --accent-text: #E8F2EE;
+      --text: #1A2E27;
+      --muted: #4A5E56;
+      --low: #3a7d5c;
+      --mid: #a07c2a;
+      --high: #b84040;
+      --radius: 10px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      overflow: hidden;
+      line-height: 1.8;
+    }
+
+    /* ── Sidebar (hidden by default, slides in) ── */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 230px;
+      background: var(--sidebar);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 20px 12px;
+      gap: 6px;
+      z-index: 200;
+      transform: translateX(-100%);
+      transition: transform 0.3s cubic-bezier(.4, 0, .2, 1);
+    }
+
+    .sidebar.open {
+      transform: translateX(0);
+    }
+
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 199;
+    }
+
+    .sidebar-overlay.open {
+      display: block;
+    }
+
+    .logo {
+      font-family: 'DM Serif Display', Georgia, serif;
+      font-size: 20px;
+      color: var(--text);
+      padding: 4px 10px 16px;
+      letter-spacing: .02em;
+    }
+
+    .sidebar-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      border-radius: 8px;
+      border: none;
+      background: none;
+      color: var(--muted);
+      font-family: 'Inter', sans-serif;
+      font-size: 13.5px;
+      cursor: pointer;
+      transition: background .15s, color .15s;
+      text-align: left;
+    }
+
+    .sidebar-btn:hover {
+      background: var(--card);
+      color: var(--text);
+    }
+
+    .sidebar-btn.new {
+      background: var(--accent);
+      color: var(--accent-text);
+      font-weight: 500;
+      border-radius: 7px;
+    }
+
+    .sidebar-btn.new:hover {
+      background: #4a6a5e;
+    }
+
+    .sidebar-btn svg {
+      flex-shrink: 0;
+    }
+
+    .history-label {
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: .08em;
+      padding: 14px 12px 4px;
+      text-transform: uppercase;
+    }
+
+    .history-item {
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 12.5px;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      transition: background .15s, color .15s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .history-item:hover {
+      background: var(--card);
+      color: var(--text);
+    }
+
+    .history-item .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .history-item .dot.low {
+      background: var(--low);
+    }
+
+    .history-item .dot.mid {
+      background: var(--mid);
+    }
+
+    .history-item .dot.high {
+      background: var(--high);
+    }
+
+    .sidebar-bottom {
+      margin-top: auto;
+    }
+
+    /* ── Main ── */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Topbar ── */
+    .topbar {
+      height: 52px;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      gap: 14px;
+      background: var(--bg);
+      flex-shrink: 0;
+    }
+
+    .menu-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: none;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      transition: background .15s;
+    }
+
+    .menu-btn:hover {
+      background: var(--card);
+    }
+
+    .menu-btn span {
+      display: block;
+      width: 14px;
+      height: 1.5px;
+      background: var(--muted);
+      border-radius: 2px;
+    }
+
+    .topbar-logo {
+      font-family: 'DM Serif Display', Georgia, serif;
+      font-size: 17px;
+      color: var(--text);
+    }
+
+    .spacer {
+      flex: 1;
+    }
+
+    .api-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .api-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #3a7d5c;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: .4
+      }
+    }
+
+    /* ── Content ── */
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .content::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .content::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .content::-webkit-scrollbar-thumb {
+      background: var(--border-light);
+      border-radius: 4px;
+    }
+
+    /* ── Welcome ── */
+    .welcome {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      gap: 10px;
+    }
+
+    .welcome-hey {
+      font-family: 'DM Serif Display', Georgia, serif;
+      font-size: 42px;
+      color: var(--text);
+      opacity: 0;
+      animation: waveIn 0.7s ease forwards;
+    }
+
+    @keyframes waveIn {
+      0% {
+        opacity: 0;
+        transform: translateY(24px) rotate(-2deg);
+      }
+
+      60% {
+        opacity: 1;
+        transform: translateY(-4px) rotate(0.5deg);
+      }
+
+      100% {
+        opacity: 1;
+        transform: translateY(0) rotate(0);
+      }
+    }
+
+    .welcome p {
+      font-size: 14px;
+      color: var(--muted);
+      text-align: center;
+      max-width: 340px;
+      opacity: 0;
+      animation: fadeUp 0.6s ease 0.3s forwards;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .hints {
+      display: flex;
+      gap: 10px;
+      margin-top: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+      opacity: 0;
+      animation: fadeUp 0.6s ease 0.5s forwards;
+    }
+
+    .hint-chip {
+      padding: 7px 14px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      font-size: 12.5px;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all .15s;
+      background: transparent;
+    }
+
+    .hint-chip:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--card);
+    }
+
+    /* ── Submit animation wave ── */
+    @keyframes submitWave {
+      0% {
+        transform: translateY(0) scaleY(1);
+      }
+
+      30% {
+        transform: translateY(-8px) scaleY(1.05);
+      }
+
+      60% {
+        transform: translateY(3px) scaleY(0.97);
+      }
+
+      100% {
+        transform: translateY(0) scaleY(1);
+      }
+    }
+
+    .input-wrap.wave {
+      animation: submitWave 0.5s ease;
+    }
+
+    /* ── Result ── */
+    .result-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      animation: fadeUp .4s ease;
+    }
+
+    /* Score - just one rating card */
+    .score-solo {
+      background: var(--card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .score-big {
+      font-family: 'DM Serif Display', Georgia, serif;
+      font-size: 52px;
+      line-height: 1;
+    }
+
+    .score-big.low {
+      color: var(--low);
+    }
+
+    .score-big.mid {
+      color: var(--mid);
+    }
+
+    .score-big.high {
+      color: var(--high);
+    }
+
+    .score-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .score-label-main {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--muted);
+    }
+
+    .verdict-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      width: fit-content;
+    }
+
+    .verdict-badge.low {
+      background: #3a7d5c18;
+      color: var(--low);
+      border: 1px solid #3a7d5c30;
+    }
+
+    .verdict-badge.mid {
+      background: #a07c2a18;
+      color: var(--mid);
+      border: 1px solid #a07c2a30;
+    }
+
+    .verdict-badge.high {
+      background: #b8404018;
+      color: var(--high);
+      border: 1px solid #b8404030;
+    }
+
+    .score-rec {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .section-card {
+      background: var(--card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+    }
+
+    .section-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--muted);
+      margin-bottom: 12px;
+      font-weight: 500;
+    }
+
+    .section-text {
+      font-size: 13.5px;
+      line-height: 1.8;
+      color: var(--text);
+    }
+
+    /* AI Insights as compact bullets */
+    .insight-list {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .insight-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 12.5px;
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    .insight-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--accent);
+      flex-shrink: 0;
+      margin-top: 7px;
+    }
+
+    /* Collected grid - 30+ items */
+    .collected-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 6px;
+    }
+
+    .collected-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 9px;
+      border-radius: 7px;
+      border: 1px solid var(--border-light);
+      font-size: 11.5px;
+      background: var(--panel);
+    }
+
+    .collected-item.yes {
+      border-color: #b8404030;
+      background: #b8404008;
+    }
+
+    .collected-item.no {
+      opacity: 0.45;
+    }
+
+    .collected-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .collected-item.yes .collected-dot {
+      background: var(--high);
+    }
+
+    .collected-item.no .collected-dot {
+      background: var(--border);
+    }
+
+    .collected-item.yes span {
+      color: var(--text);
+    }
+
+    .collected-item.no span {
+      color: var(--muted);
+    }
+
+    /* Tag list */
+    .tag-list {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .tag-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .tag-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      margin-top: 7px;
+      flex-shrink: 0;
+    }
+
+    /* Tabs */
+    .tabs-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tabs-header .tabs {
+      flex: 1;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 2px;
+      border-bottom: 1px solid var(--border-light);
+      margin-bottom: 14px;
+    }
+
+    .tab {
+      padding: 7px 13px;
+      font-size: 12.5px;
+      color: var(--muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all .15s;
+    }
+
+    .tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    .tab-panel {
+      display: none;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    /* Data table */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12.5px;
+    }
+
+    .data-table th {
+      text-align: left;
+      padding: 8px 10px;
+      font-size: 10.5px;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border-light);
+      font-weight: 500;
+    }
+
+    .data-table td {
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border-light);
+      color: var(--text);
+    }
+
+    .data-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .data-table tr:hover td {
+      background: rgba(92, 122, 110, .04);
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 10.5px;
+      font-weight: 500;
+    }
+
+    .pill.yes {
+      background: #3a7d5c18;
+      color: var(--low);
+    }
+
+    .pill.no {
+      background: #b8404018;
+      color: var(--high);
+    }
+
+    .pill.risk-low {
+      background: #3a7d5c18;
+      color: var(--low);
+    }
+
+    .pill.risk-medium {
+      background: #a07c2a18;
+      color: var(--mid);
+    }
+
+    .pill.risk-high {
+      background: #b8404018;
+      color: var(--high);
+    }
+
+    /* Category bars */
+    .cat-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .cat-row {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .cat-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12.5px;
+      align-items: center;
+    }
+
+    .cat-name {
+      color: var(--text);
+    }
+
+    .cat-verdict {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .cat-bar-bg {
+      height: 5px;
+      background: var(--border-light);
+      border-radius: 4px;
+    }
+
+    .cat-bar-fill {
+      height: 5px;
+      border-radius: 4px;
+      transition: width .7s ease;
+    }
+
+    /* Benchmark */
+    .bench-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .bench-item {
+      text-align: center;
+    }
+
+    .bench-num {
+      font-family: 'DM Serif Display', Georgia, serif;
+      font-size: 26px;
+    }
+
+    .bench-lbl {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* Follow-up */
+    .followup-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .followup-chip {
+      padding: 6px 12px;
+      border-radius: 7px;
+      border: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--muted);
+      cursor: pointer;
+      background: transparent;
+      font-family: 'Inter', sans-serif;
+      transition: all .15s;
+    }
+
+    .followup-chip:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .answer-box {
+      background: var(--panel);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      font-size: 13.5px;
+      line-height: 1.8;
+      color: var(--text);
+      margin-top: 8px;
+    }
+
+    /* Two col */
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    /* Help button */
+    .help-btn {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-bottom: 14px;
+      transition: border-color .15s, color .15s;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .help-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* Help modal */
+    .help-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(26, 46, 39, .35);
+      z-index: 999;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .help-overlay.open {
+      display: flex;
+    }
+
+    .help-modal {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 26px 28px;
+      max-width: 480px;
+      width: 92%;
+      position: relative;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    .help-modal h3 {
+      font-family: 'DM Serif Display', Georgia, serif;
+      font-size: 18px;
+      color: var(--text);
+      margin-bottom: 18px;
+    }
+
+    .help-close {
+      position: absolute;
+      top: 14px;
+      right: 16px;
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 18px;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .help-close:hover {
+      color: var(--text);
+    }
+
+    .help-item {
+      margin-bottom: 18px;
+    }
+
+    .help-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .help-item-title {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--accent);
+      margin-bottom: 4px;
+    }
+
+    .help-item-desc {
+      font-size: 12.5px;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    /* Glossary items in help modal */
+    .glossary-term {
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .glossary-def {
+      color: var(--muted);
+    }
+
+    /* ── Input bar ── */
+    .input-bar {
+      padding: 12px 20px;
+      border-top: 1px solid var(--border-light);
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .attach-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: var(--accent);
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background .15s;
+    }
+
+    .attach-btn:hover {
+      background: #4a6a5e;
+    }
+
+    .attach-menu {
+      position: absolute;
+      bottom: 64px;
+      left: 20px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 6px;
+      display: none;
+      flex-direction: column;
+      gap: 2px;
+      z-index: 100;
+      min-width: 160px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, .08);
+    }
+
+    .attach-menu.open {
+      display: flex;
+    }
+
+    .attach-opt {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      border-radius: 7px;
+      font-size: 13px;
+      color: var(--muted);
+      cursor: pointer;
+      border: none;
+      background: none;
+      font-family: 'Inter', sans-serif;
+      transition: background .1s, color .1s;
+    }
+
+    .attach-opt:hover {
+      background: var(--card);
+      color: var(--text);
+    }
+
+    .input-wrap {
+      flex: 1;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+      padding: 0 6px 0 14px;
+      transition: border-color .2s;
+    }
+
+    .input-wrap:focus-within {
+      border-color: var(--accent);
+    }
+
+    .main-input {
+      flex: 1;
+      background: none;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 13.5px;
+      padding: 10px 0;
+    }
+
+    .main-input::placeholder {
+      color: var(--muted);
+    }
+
+    .send-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: var(--accent);
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background .15s;
+    }
+
+    .send-btn:hover {
+      background: #4a6a5e;
+    }
+
+    .app-name-input {
+      width: 120px;
+      background: var(--card);
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 12.5px;
+      padding: 8px 10px;
+      outline: none;
+      flex-shrink: 0;
+    }
+
+    .app-name-input::placeholder {
+      color: var(--muted);
+    }
+
+    .app-name-input:focus {
+      border-color: var(--border);
+    }
+
+    input[type=file] {
+      display: none;
+    }
+
+    /* Loading */
+    .loading-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      gap: 16px;
+    }
+
+    .loading-ring {
+      width: 36px;
+      height: 36px;
+      border: 2.5px solid var(--border-light);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg)
+      }
+    }
+
+    .loading-text {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    /* ── AI Q&A answer card ── */
+    .qa-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      animation: fadeUp .4s ease;
+      max-width: 720px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .qa-question {
+      background: var(--accent);
+      color: var(--accent-text);
+      border-radius: 10px 10px 4px 10px;
+      padding: 12px 16px;
+      font-size: 14px;
+      align-self: flex-end;
+      max-width: 80%;
+    }
+
+    .qa-answer-card {
+      background: var(--card);
+      border: 1px solid var(--border-light);
+      border-radius: 4px 10px 10px 10px;
+      padding: 18px 20px;
+      font-size: 14px;
+      line-height: 1.85;
+      color: var(--text);
+    }
+
+    .qa-answer-card .qa-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--muted);
+      margin-bottom: 10px;
+      font-weight: 500;
+    }
+
+    .qa-ask-more {
+      font-size: 12.5px;
+      color: var(--muted);
+      text-align: center;
+      padding-top: 4px;
+    }
+
+    @media(max-width:700px) {
+
+      .two-col,
+      .bench-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Sidebar overlay (closes sidebar on outside click) -->
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+  <!-- Sidebar -->
+  <div class="sidebar" id="sidebar">
+    <div class="logo">Krypton</div>
+    <button class="sidebar-btn new" onclick="newChat(); closeSidebar()">
+      <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+        <path d="M12 5v14M5 12h14" />
+      </svg>
+      New Analysis
+    </button>
+    <div class="history-label">History</div>
+    <div id="sidebarHistory"></div>
+    <div class="sidebar-bottom">
+      <button class="sidebar-btn" onclick="clearHistory()" style="color:var(--high);font-size:12px;">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <polyline points="3 6 5 6 21 6" />
+          <path d="M19 6l-1 14H6L5 6" />
+          <path d="M10 11v6M14 11v6" />
+        </svg>
+        Clear History
+      </button>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="topbar">
+      <button class="menu-btn" onclick="toggleSidebar()" title="History">
+        <span></span><span></span><span></span>
+      </button>
+      <span class="topbar-logo">Krypton</span>
+      <div class="spacer"></div>
+      <div class="api-status">
+        <div class="api-dot"></div> Connected
+      </div>
+    </div>
+
+    <div class="content" id="content">
+      <div class="welcome" id="welcome">
+        <div class="welcome-hey">Hey there!</div>
+        <p>Paste a privacy policy, drop a URL, or upload a PDF — find out exactly what data an app collects about you.
+          Or just ask a question!
+        </p>
+        <div class="hints">
+          <div class="hint-chip" onclick="setInput('Paste policy text and analyze it')">Paste text</div>
+          <div class="hint-chip" onclick="setInput('https://example.com/privacy')">Use URL</div>
+          <div class="hint-chip" onclick="triggerFile('pdf')">Upload PDF</div>
+          <div class="hint-chip" onclick="triggerFile('img')">Screenshot</div>
+          <div class="hint-chip" onclick="setInput('What is an IP address?')">Ask a question</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Input bar -->
+    <div class="input-bar">
+      <div style="position:relative;">
+        <button class="attach-btn" onclick="toggleMenu()" title="Attach">
+          <svg width="15" height="15" fill="none" stroke="var(--accent-text)" stroke-width="2.5" viewBox="0 0 24 24">
+            <path
+              d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66L9.41 17.41a2 2 0 01-2.83-2.83l8.49-8.48" />
+          </svg>
+        </button>
+        <div class="attach-menu" id="attachMenu">
+          <button class="attach-opt" onclick="triggerFile('pdf');toggleMenu()">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+            </svg>Upload PDF
+          </button>
+          <button class="attach-opt" onclick="triggerFile('img');toggleMenu()">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <rect x="3" y="3" width="18" height="18" rx="2" />
+              <circle cx="8.5" cy="8.5" r="1.5" />
+              <polyline points="21 15 16 10 5 21" />
+            </svg>Screenshot
+          </button>
+        </div>
+      </div>
+      <input type="file" id="filePdf" accept=".pdf" onchange="handleFile(event,'pdf')" />
+      <input type="file" id="fileImg" accept="image/*" onchange="handleFile(event,'image')" />
+      <div class="input-wrap" id="inputWrap">
+        <input class="main-input" id="mainInput" placeholder="Paste policy text, enter URL, or ask a question…"
+          onkeydown="if(event.key==='Enter')send()" />
+      </div>
+      <button class="send-btn" onclick="send()" title="Analyze">
+        <svg width="13" height="13" fill="none" stroke="var(--accent-text)" stroke-width="2.5" viewBox="0 0 24 24">
+          <line x1="22" y1="2" x2="11" y2="13" />
+          <polygon points="22 2 15 22 11 13 2 9 22 2" />
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Help Modal -->
+  <div class="help-overlay" id="helpOverlay" onclick="if(event.target===this)closeHelp()">
+    <div class="help-modal">
+      <button class="help-close" onclick="closeHelp()">✕</button>
+      <h3>Understanding Your Analysis</h3>
+
+      <div class="help-item">
+        <div class="help-item-title">📋 Data Table</div>
+        <div class="help-item-desc">Every data type found in the policy — what is collected, who it's shared with, if
+          you can opt out, and how risky it is.</div>
+      </div>
+
+      <div class="help-item">
+        <div class="help-item-title">📊 Category Scores</div>
+        <div class="help-item-desc">How well the app performs across privacy areas. A higher score = better for your
+          privacy in that area. Here's how to read them:<br><br>
+          <strong>Data Collection</strong> — How much personal data does this app collect? Lower is better for you.<br>
+          <strong>Transparency</strong> — Does the app clearly explain what it does with your data?<br>
+          <strong>Third-Party Sharing</strong> — How much is shared with advertisers, partners, and others?<br>
+          <strong>User Rights</strong> — Can you delete your data, opt out, or see what they have?<br>
+          <strong>Security</strong> — How seriously do they protect your data?<br>
+          <br>Think of each score as a grade — 80+ is good, 50–79 is average, below 50 is concerning.
+        </div>
+      </div>
+
+      <div class="help-item">
+        <div class="help-item-title">📈 Benchmark</div>
+        <div class="help-item-desc">Compares this app against others in its category. Is a 60 good or bad? Benchmark
+          shows you where it actually stands.</div>
+      </div>
+
+      <div class="help-item">
+        <div class="help-item-title" style="font-size:13px;margin-bottom:10px;margin-top:4px;">🔍 What these terms mean
+        </div>
+        <div class="help-item-desc" style="display:flex;flex-direction:column;gap:10px;">
+          <div><span class="glossary-term">🍪 Cookie</span> — A tiny file saved on your device when you visit a website.
+            It remembers things like whether you're logged in, what you clicked, or what ads you've seen. Websites use
+            cookies to track your behaviour across the internet.</div>
+          <div><span class="glossary-term">🌐 IP Address</span> — Your device's unique "home address" on the internet,
+            like 192.168.1.1. Every time you go online, this number is visible. It can reveal your approximate
+            city/location and your internet provider.</div>
+          <div><span class="glossary-term">📱 Device ID</span> — A permanent code unique to your phone or computer, like
+            a serial number. Apps use it to recognise your device across sessions even if you delete the app and
+            reinstall it.</div>
+          <div><span class="glossary-term">🔗 Social Connections</span> — Your friends, followers, or contacts list on
+            social platforms. Apps that ask to "find friends" often collect this entire list — not just the people you
+            picked.</div>
+          <div><span class="glossary-term">📍 Location</span> — Where you physically are. GPS-level location is very
+            precise (within metres). Apps can log everywhere you go, when you go there, and how often.</div>
+          <div><span class="glossary-term">🧬 Biometrics</span> — Physical data about your body — fingerprints, face
+            shape, voice pattern. Very sensitive because it cannot be changed if leaked.</div>
+          <div><span class="glossary-term">🔎 Browsing History</span> — Every website you've visited. Advertisers use
+            this to build a detailed profile of your interests, habits, and purchases.</div>
+          <div><span class="glossary-term">🤝 Third-Party Sharing</span> — When your data is sent to other companies
+            (advertisers, analytics firms, data brokers). Often happens without you knowing.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API = 'http://127.0.0.1:8000';
+    let currentResult = null;
+
+    /* ── Sidebar ── */
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('open');
+      document.getElementById('sidebarOverlay').classList.toggle('open');
+    }
+    function closeSidebar() {
+      document.getElementById('sidebar').classList.remove('open');
+      document.getElementById('sidebarOverlay').classList.remove('open');
+    }
+
+    /* ── Helpers ── */
+    function setInput(v) { document.getElementById('mainInput').value = v; document.getElementById('mainInput').focus(); }
+    function triggerFile(t) { document.getElementById(t === 'pdf' ? 'filePdf' : 'fileImg').click(); }
+    function toggleMenu() { document.getElementById('attachMenu').classList.toggle('open'); }
+    document.addEventListener('click', e => {
+      if (!e.target.closest('.attach-btn') && !e.target.closest('.attach-menu'))
+        document.getElementById('attachMenu').classList.remove('open');
+    });
+
+    function scoreClass(s) { return s >= 65 ? 'low' : s >= 40 ? 'mid' : 'high'; }
+    function openHelp() { document.getElementById('helpOverlay').classList.add('open'); }
+    function closeHelp() { document.getElementById('helpOverlay').classList.remove('open'); }
+
+    const ALL_DATA_TYPES = [
+      { type: 'IP Address', icon: '🌐' }, { type: 'Device ID', icon: '📱' },
+      { type: 'Location (GPS)', icon: '📍' }, { type: 'Location (Approximate)', icon: '🗺️' },
+      { type: 'Name', icon: '👤' }, { type: 'Email', icon: '✉️' },
+      { type: 'Phone Number', icon: '📞' }, { type: 'Age', icon: '🎂' },
+      { type: 'Gender', icon: '⚧' }, { type: 'Profile Photo', icon: '🖼️' },
+      { type: 'Contacts', icon: '👥' }, { type: 'Social Connections', icon: '🔗' },
+      { type: 'Browsing History', icon: '🔍' }, { type: 'Search History', icon: '🔎' },
+      { type: 'App Usage Data', icon: '📊' }, { type: 'Purchase History', icon: '🛒' },
+      { type: 'Financial Data', icon: '💳' }, { type: 'Messages', icon: '💬' },
+      { type: 'Cookies', icon: '🍪' }, { type: 'Camera', icon: '📷' },
+      { type: 'Microphone', icon: '🎙️' }, { type: 'Clipboard', icon: '📋' },
+      { type: 'Biometrics', icon: '🧬' }, { type: 'Health Data', icon: '❤️' },
+      { type: 'Fitness Data', icon: '🏃' }, { type: 'Sleep Data', icon: '😴' },
+      { type: 'Voice Data', icon: '🎤' }, { type: 'Face Data', icon: '🤖' },
+      { type: 'Device Sensors', icon: '📡' }, { type: 'Wi-Fi Networks', icon: '📶' },
+      { type: 'Bluetooth Data', icon: '🔵' }, { type: 'Ad Identifier', icon: '🎯' },
+      { type: 'Crash Logs', icon: '🪲' }, { type: 'Third-Party Data Sharing', icon: '🤝' },
+    ];
+
+    function buildCollectedGrid(apiItems) {
+      const apiMap = {};
+      (apiItems || []).forEach(i => { apiMap[i.type] = i.collected; });
+
+      return ALL_DATA_TYPES.map(dt => {
+        const collected = apiMap[dt.type];
+        const cls = collected === true ? 'yes' : collected === false ? 'no' : 'no';
+        return `<div class="collected-item ${cls}"><div class="collected-dot"></div><span>${dt.icon} ${dt.type}</span></div>`;
+      }).join('');
+    }
+
+    function boolPill(v) { return v ? '<span class="pill yes">Yes</span>' : '<span class="pill no">No</span>'; }
+
+    /* ── Category scores — human label ── */
+    function catVerdict(score) {
+      if (score >= 75) return '✓ Good';
+      if (score >= 50) return '⚠ Average';
+      return '✗ Concerning';
+    }
+
+    /* ── Loading ── */
+    function showLoading() {
+      document.getElementById('content').innerHTML = `
+        <div class="loading-wrap">
+          <div class="loading-ring"></div>
+          <div class="loading-text">Analysing policy…</div>
+        </div>`;
+    }
+
+    function newChat() {
+      currentResult = null;
+      qaHistory = [];
+      document.getElementById('content').innerHTML = `
+        <div class="welcome" id="welcome">
+          <div class="welcome-hey">Hey there!</div>
+          <p>Paste a privacy policy, drop a URL, or upload a PDF — find out exactly what data an app collects about you. Or just ask a question!</p>
+          <div class="hints">
+            <div class="hint-chip" onclick="setInput('Paste policy text and analyze it')">Paste text</div>
+            <div class="hint-chip" onclick="setInput('https://example.com/privacy')">Use URL</div>
+            <div class="hint-chip" onclick="triggerFile('pdf')">Upload PDF</div>
+            <div class="hint-chip" onclick="triggerFile('img')">Screenshot</div>
+            <div class="hint-chip" onclick="setInput('What is an IP address?')">Ask a question</div>
+          </div>
+        </div>`;
+      document.getElementById('mainInput').value = '';
+    }
+
+    function showError(msg) {
+      document.getElementById('content').innerHTML = `
+        <div class="welcome">
+          <div style="font-size:30px">⚠️</div>
+          <h2 style="font-family:'DM Serif Display',Georgia,serif;color:var(--high)">Error</h2>
+          <p style="color:var(--muted)">${msg}</p>
+          <div class="hints"><div class="hint-chip" onclick="newChat()">Try again</div></div>
+        </div>`;
+    }
+
+    /* ── Question detection ── */
+    function looksLikeQuestion(val) {
+      // Starts with question word, ends with ?, or is short and not a URL/long policy text
+      const questionWords = /^(what|why|how|when|where|who|which|can|does|is|are|do|tell me|explain|define|what's|whats|give me)/i;
+      if (/^https?:\/\//i.test(val)) return false;
+      if (val.endsWith('?')) return true;
+      if (questionWords.test(val.trim())) return true;
+      // If short (< 120 chars) and no newlines, treat as question
+      if (val.length < 120 && !val.includes('\n') && val.split(' ').length < 20) return true;
+      return false;
+    }
+
+    /* ── Send ── */
+    async function send() {
+      const val = document.getElementById('mainInput').value.trim();
+      if (!val) return;
+
+      // Wave animation on input
+      const wrap = document.getElementById('inputWrap');
+      wrap.classList.remove('wave');
+      void wrap.offsetWidth;
+      wrap.classList.add('wave');
+      setTimeout(() => wrap.classList.remove('wave'), 600);
+
+      const isUrl = /^https?:\/\//i.test(val);
+
+      // Route to AI Q&A if it looks like a question
+      if (!isUrl && looksLikeQuestion(val)) {
+        document.getElementById('mainInput').value = '';
+        await askQuestion(val);
+        return;
+      }
+
+      showLoading();
+
+      try {
+        let res;
+        if (isUrl) {
+          const fd = new FormData();
+          fd.append('url', val);
+          res = await fetch(`${API}/analyze-url`, { method: 'POST', body: fd });
+        } else {
+          res = await fetch(`${API}/analyze`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: val })
+          });
+        }
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        renderResult(data);
+        loadHistory();
+      } catch (e) { showError(e.message); }
+    }
+
+    /* ── AI Q&A ── */
+    let qaHistory = []; // store conversation
+
+    async function askQuestion(question) {
+      const content = document.getElementById('content');
+
+      // If we have a current result, keep it and add Q&A below the result
+      if (currentResult) {
+        // Ensure the qa section exists inside the result-wrap
+        let qaSection = document.getElementById('qaSection');
+        if (!qaSection) {
+          const resultWrap = content.querySelector('.result-wrap');
+          if (resultWrap) {
+            const sec = document.createElement('div');
+            sec.className = 'section-card';
+            sec.id = 'qaSection';
+            sec.innerHTML = '<div class="section-title">Questions & Answers</div><div class="qa-wrap" id="qaContainer"></div>';
+            resultWrap.appendChild(sec);
+          }
+        }
+      } else {
+        // No result yet — use standalone chat mode
+        if (!document.getElementById('qaContainer')) {
+          content.innerHTML = '<div class="qa-wrap" id="qaContainer"></div>';
+          qaHistory = [];
+        }
+      }
+
+      const container = document.getElementById('qaContainer');
+
+      // Add user bubble
+      const userBubble = document.createElement('div');
+      userBubble.className = 'qa-question';
+      userBubble.textContent = question;
+      container.appendChild(userBubble);
+
+      // Add thinking placeholder
+      const answerCard = document.createElement('div');
+      answerCard.className = 'qa-answer-card';
+      answerCard.innerHTML = '<div class="qa-label">Krypton AI</div><span style="color:var(--muted);font-size:13px">Thinking…</span>';
+      container.appendChild(answerCard);
+      content.scrollTop = content.scrollHeight;
+
+      // Build messages with history for context
+      qaHistory.push({ role: 'user', content: question });
+
+      // Build context string if a result is loaded
+      const ctx = currentResult ? `"${currentResult.app_name || 'an app'}" (verdict: ${currentResult.verdict})` : '';
+
+      try {
+        const response = await fetch(`${API}/ask`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question, context: ctx })
+        });
+
+        if (!response.ok) {
+          throw new Error(`Server returned ${response.status} — make sure you're running the updated main.py`);
+        }
+
+        const data = await response.json();
+        const text = data.answer || 'No answer returned.';
+
+        qaHistory.push({ role: 'assistant', content: text });
+
+        answerCard.innerHTML = `<div class="qa-label">Krypton AI</div>${formatAnswer(text)}`;
+      } catch (e) {
+        answerCard.innerHTML = `<div class="qa-label">Krypton AI</div><span style="color:var(--high);font-size:12.5px">${e.message}</span>`;
+      }
+
+      content.scrollTop = content.scrollHeight;
+    }
+
+    function formatAnswer(text) {
+      // Convert **bold**, line breaks, and bullet-like lines to HTML
+      return text
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        .replace(/^[-•]\s+/gm, '• ')
+        .split('\n\n')
+        .map(p => p.trim() ? `<p style="margin-bottom:10px">${p.replace(/\n/g, '<br>')}</p>` : '')
+        .join('');
+    }
+
+    async function handleFile(e, type) {
+      const file = e.target.files[0];
+      if (!file) return;
+      showLoading();
+      const fd = new FormData();
+      fd.append('file', file);
+      try {
+        const res = await fetch(`${API}/analyze-file`, { method: 'POST', body: fd });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        renderResult(data);
+        loadHistory();
+      } catch (e) { showError(e.message); }
+      e.target.value = '';
+    }
+
+    /* ── Render result ── */
+    function renderResult(d) {
+      currentResult = d;
+      const sc = scoreClass(d.score_100);
+
+      // Category bars — with human verdict instead of raw number
+      const catBars = (d.category_scores || []).map(c => {
+        const cc = scoreClass(c.score);
+        const colors = { low: 'var(--low)', mid: 'var(--mid)', high: 'var(--high)' };
+        return `<div class="cat-row">
+          <div class="cat-header">
+            <span class="cat-name">${c.name}</span>
+            <span class="cat-verdict" style="color:${colors[cc]}">${catVerdict(c.score)}</span>
+          </div>
+          <div class="cat-bar-bg"><div class="cat-bar-fill" style="width:${c.score}%;background:${colors[cc]}"></div></div>
+        </div>`;
+      }).join('');
+
+      const tableRows = (d.data_table || []).map(r => `<tr>
+        <td>${r.category}</td>
+        <td>${boolPill(r.collected)}</td>
+        <td>${boolPill(r.shared_with_third_party)}</td>
+        <td>${boolPill(r.can_opt_out)}</td>
+        <td style="color:var(--muted);font-size:11.5px">${r.retention || '—'}</td>
+        <td><span class="pill risk-${r.risk_level?.toLowerCase()}">${r.risk_level}</span></td>
+      </tr>`).join('');
+
+      const risks = (d.risks || []).map(r =>
+        `<div class="tag-item"><div class="tag-dot" style="background:var(--high)"></div><span>${r}</span></div>`).join('');
+      const impacts = (d.user_impact || []).map(r =>
+        `<div class="tag-item"><div class="tag-dot" style="background:var(--accent)"></div><span>${r}</span></div>`).join('');
+      const solutions = (d.actionable_solutions || []).map((s, i) =>
+        `<div class="tag-item"><div style="font-size:11px;color:var(--muted);min-width:14px">${i + 1}.</div><span>${s}</span></div>`).join('');
+      const fqs = (d.follow_up_questions || []).map(q =>
+        `<button class="followup-chip" onclick="askFollowup(this,'${q.replace(/'/g, "\\'")}')">↗ ${q}</button>`).join('');
+
+      // AI Insights as compact bullet points
+      const insights = (d.ai_insights || []).map(i =>
+        `<div class="insight-item"><div class="insight-dot"></div><span>${i}</span></div>`).join('');
+
+      const bm = d.benchmark || {};
+      const bench = `<div class="bench-grid">
+        <div class="bench-item"><div class="bench-num ${sc}">${bm.your_score ?? d.score_100}</div><div class="bench-lbl">Your Score</div></div>
+        <div class="bench-item"><div class="bench-num" style="color:var(--muted)">${bm.industry_average ?? 52}</div><div class="bench-lbl">Industry Avg</div></div>
+        <div class="bench-item"><div class="bench-num" style="color:var(--low)">${bm.best_in_class ?? 85}</div><div class="bench-lbl">Best in Class</div></div>
+        <div class="bench-item"><div class="bench-num" style="color:var(--high)">${bm.worst_in_class ?? 18}</div><div class="bench-lbl">Worst in Class</div></div>
+      </div>
+      ${bm.comparison_note ? `<p style="font-size:12.5px;color:var(--muted);margin-top:12px">${bm.comparison_note}</p>` : ''}`;
+
+      document.getElementById('content').innerHTML = `
+        <div class="result-wrap">
+
+          <!-- Rating -->
+          <div class="score-solo">
+            <div class="score-big ${sc}">${d.score_10}</div>
+            <div class="score-meta">
+              <div class="score-label-main">Rating</div>
+              <div class="verdict-badge ${sc}">${d.verdict}</div>
+              <div class="score-rec">${d.recommendation || ''}</div>
+            </div>
+          </div>
+
+          <!-- Tabs -->
+          <div class="section-card" style="padding-bottom:14px">
+            <div class="tabs-header">
+              <div class="tabs">
+                <div class="tab active" onclick="switchTab(0,this)">Overview</div>
+                <div class="tab" onclick="switchTab(1,this)">Data Table</div>
+                <div class="tab" onclick="switchTab(2,this)">Category Scores</div>
+                <div class="tab" onclick="switchTab(3,this)">Benchmark</div>
+              </div>
+              <button class="help-btn" onclick="openHelp()" title="What do these mean?">?</button>
+            </div>
+
+            <!-- Tab 0: Overview -->
+            <div class="tab-panel active" id="tab0">
+              <div class="section-title">Data Collected by This App</div>
+              <div class="collected-grid">${buildCollectedGrid(d.collected_data || [])}</div>
+              <div style="margin-top:18px">
+                <div class="section-title">AI Insights</div>
+                <div class="insight-list">${insights || '<span style="color:var(--muted);font-size:13px">—</span>'}</div>
+              </div>
+            </div>
+
+            <!-- Tab 1: Data Table -->
+            <div class="tab-panel" id="tab1">
+              <div style="overflow-x:auto">
+                <table class="data-table">
+                  <thead><tr><th>Data Type</th><th>Collected</th><th>Shared</th><th>Opt-Out</th><th>Retention</th><th>Risk</th></tr></thead>
+                  <tbody>${tableRows || '<tr><td colspan="6" style="color:var(--muted);text-align:center;padding:20px">No data detected</td></tr>'}</tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Tab 2: Category Scores -->
+            <div class="tab-panel" id="tab2">
+              <div class="cat-list">${catBars || '<p style="color:var(--muted);font-size:13px">No category scores available.</p>'}</div>
+            </div>
+
+            <!-- Tab 3: Benchmark -->
+            <div class="tab-panel" id="tab3">${bench}</div>
+          </div>
+
+          <!-- Actions -->
+          <div class="section-card">
+            <div class="section-title">Actionable Steps</div>
+            <div class="tag-list">${solutions || '<span style="color:var(--muted);font-size:13px">—</span>'}</div>
+          </div>
+
+          <!-- Follow-up -->
+          <div class="section-card">
+            <div class="section-title">Ask a Follow-up Question</div>
+            <div class="followup-chips">${fqs}</div>
+            <div id="followupAnswer"></div>
+          </div>
+
+        </div>`;
+    }
+
+    function switchTab(idx, el) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      el.classList.add('active');
+      document.getElementById('tab' + idx).classList.add('active');
+    }
+
+    /* ── Follow-up ── */
+    async function askFollowup(btn, question) {
+      if (!currentResult) return;
+      const box = document.getElementById('followupAnswer');
+      box.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:10px 0">Thinking…</div>';
+      try {
+        const res = await fetch(`${API}/followup`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: currentResult.simple_analysis || '', question })
+        });
+        const data = await res.json();
+        box.innerHTML = `<div class="answer-box"><strong style="font-size:12px;color:var(--accent)">${question}</strong><br><br>${data.answer}</div>`;
+      } catch (e) {
+        box.innerHTML = `<div class="answer-box" style="color:var(--high)">Could not fetch answer.</div>`;
+      }
+    }
+
+    /* ── History ── */
+    async function loadHistory() {
+      try {
+        const res = await fetch(`${API}/history`);
+        const items = await res.json();
+        const el = document.getElementById('sidebarHistory');
+        if (!Array.isArray(items) || items.length === 0) {
+          el.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:4px 12px">No history yet</div>';
+          return;
+        }
+        el.innerHTML = items.slice(0, 10).map(h => {
+          const sc = h.score_100 >= 65 ? 'low' : h.score_100 >= 40 ? 'mid' : 'high';
+          return `<div class="history-item" onclick="loadHistoryItem(${h.id}); closeSidebar()">
+            <div class="dot ${sc}"></div>
+            <span>${h.app_name || 'Unknown'}</span>
+          </div>`;
+        }).join('');
+      } catch { }
+    }
+
+    async function loadHistoryItem(id) {
+      showLoading();
+      try {
+        const res = await fetch(`${API}/history/${id}`);
+        const data = await res.json();
+        if (data.result) renderResult({ ...data.result, id: data.id });
+      } catch (e) { showError(e.message); }
+    }
+
+    async function clearHistory() {
+      if (!confirm('Clear all history?')) return;
+      try {
+        await fetch(`${API}/history`, { method: 'DELETE' });
+        loadHistory();
+      } catch { }
+    }
+
+    loadHistory();
+  </script>
+</body>
+
+</html>
