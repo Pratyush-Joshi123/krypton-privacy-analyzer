@@ -1342,7 +1342,10 @@
 
     function buildCollectedGrid(apiItems) {
       const apiMap = {};
-      (apiItems || []).forEach(i => { apiMap[i.type] = i.collected; });
+      (apiItems || []).forEach(i => { 
+        apiMap[i.type] = i.collected;
+        apiMap[i.type.toLowerCase()] = i.collected;
+      });
 
       return ALL_DATA_TYPES.map(dt => {
         const collected = apiMap[dt.type];
@@ -1542,6 +1545,7 @@
       showLoading();
       const fd = new FormData();
       fd.append('file', file);
+      fd.append('app_name', '');
       try {
         const res = await fetch(`${API}/analyze-file`, { method: 'POST', body: fd });
         const data = await res.json();
@@ -1738,3 +1742,4 @@
 </body>
 
 </html>
+
